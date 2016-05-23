@@ -58,7 +58,7 @@ namespace hmd {
 		void unbind();
 
 		void renderController( const vr::Hmd_Eye& eye );
-		void renderStereoTargets( std::function<void(vr::Hmd_Eye)> renderScene );
+		void renderStereoTargets( std::function<void(vr::Hmd_Eye)> renderScene, const glm::mat4& worldPose);
 		void renderDistortion( const glm::ivec2& windowSize );
 
 		const vr::IVRSystem * getHmd() const { return mHMD; }

@@ -492,7 +492,7 @@ void HtcVive::processVREvent( const vr::VREvent_t & event )
 	}
 }
 
-void hmd::HtcVive::renderStereoTargets( std::function<void( vr::Hmd_Eye )> renderScene )
+void hmd::HtcVive::renderStereoTargets( std::function<void( vr::Hmd_Eye )> renderScene, const glm::mat4& worldPose )
 {
 	glEnable( GL_MULTISAMPLE );
 
@@ -502,7 +502,7 @@ void hmd::HtcVive::renderStereoTargets( std::function<void( vr::Hmd_Eye )> rende
 	{
 		gl::ScopedViewMatrix pushView;
 		gl::ScopedProjectionMatrix pushProj;
-		gl::setViewMatrix( m_mat4eyePosLeft * m_mat4HMDPose );
+		gl::setViewMatrix( m_mat4eyePosLeft * m_mat4HMDPose * worldPose);
 		gl::setProjectionMatrix( m_mat4ProjectionLeft );
 		renderScene( vr::Eye_Left );
 		renderController( vr::Eye_Left );
@@ -529,7 +529,7 @@ void hmd::HtcVive::renderStereoTargets( std::function<void( vr::Hmd_Eye )> rende
 	{
 		gl::ScopedViewMatrix pushView;
 		gl::ScopedProjectionMatrix pushProj;
-		gl::setViewMatrix( m_mat4eyePosRight * m_mat4HMDPose );
+		gl::setViewMatrix( m_mat4eyePosRight * m_mat4HMDPose * worldPose);
 		gl::setProjectionMatrix( m_mat4ProjectionRight );
 		renderScene( vr::Eye_Right );
 		renderController( vr::Eye_Right );
