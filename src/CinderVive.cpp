@@ -129,7 +129,7 @@ HtcVive::~HtcVive()
 void hmd::HtcVive::update()
 {
 	vr::VREvent_t event;
-	while( mHMD->PollNextEvent( &event ) ) {
+	while( mHMD->PollNextEvent( &event, sizeof(event) ) ) {
 		processVREvent( event );
 	}
 
@@ -666,13 +666,13 @@ RenderModelRef HtcVive::findOrLoadRenderModel( const std::string& name )
 	// load the model if we didn't find one
 	if( resIt == std::end( mRenderModels ) ) {
 		vr::RenderModel_t *pModel = NULL;
-		if( !vr::VRRenderModels()->LoadRenderModel( name.c_str(), &pModel ) || pModel == NULL ) {
+		if( !vr::VRRenderModels()->LoadRenderModel_Async( name.c_str(), &pModel ) || pModel == NULL ) {
 			CI_LOG_E( "Unable to load render model " << name );
 			return nullptr; // move on to the next tracked device
 		}
 
 		vr::RenderModel_TextureMap_t *pTexture = NULL;
-		if( !vr::VRRenderModels()->LoadTexture( pModel->diffuseTextureId, &pTexture ) || pTexture == NULL ) {
+		if( !vr::VRRenderModels()->LoadTexture_Async( pModel->diffuseTextureId, &pTexture ) || pTexture == NULL ) {
 			CI_LOG_E( "Unable to load render texture id:%d for render model %s\n", pModel->diffuseTextureId, pchRenderModelName );
 			vr::VRRenderModels()->FreeRenderModel( pModel );
 			return nullptr; // move on to the next tracked device
