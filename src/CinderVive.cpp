@@ -58,6 +58,9 @@ HtcVive::HtcVive()
 	m_fNearClip = 0.1f;
 	m_fFarClip = 37.0f;
 
+	mDeviceIndexLeft = -1;
+	mDeviceIndexRight = -1;
+
 	if( gl::isVerticalSyncEnabled() ) {
 		CI_LOG_W( "Disabling vertical sync for maximal performance." );
 		gl::enableVerticalSync( false );
@@ -460,6 +463,8 @@ void hmd::HtcVive::renderController( const vr::Hmd_Eye& eye )
 
 		if( inputCapturedByAnotherProcess && mHMD->GetTrackedDeviceClass( i ) == vr::TrackedDeviceClass_Controller )
 			continue;
+
+		if (i == mDeviceIndexLeft || i == mDeviceIndexRight) // uncomment this to also see the lighthouse cameras etc.
 		{
 			gl::ScopedModelMatrix push;
 			gl::setModelMatrix( mDevicePose[i] );
@@ -489,6 +494,8 @@ void HtcVive::processVREvent( const vr::VREvent_t & event )
 		CI_LOG_I( "Device " << event.trackedDeviceIndex << " updated." );
 	}
 	break;
+	default:
+		CI_LOG_I("VR Event " << event.eventType << " happened.");
 	}
 }
 
@@ -505,7 +512,8 @@ void hmd::HtcVive::renderStereoTargets( std::function<void( vr::Hmd_Eye )> rende
 		gl::setViewMatrix( m_mat4eyePosLeft * m_mat4HMDPose * worldPose);
 		gl::setProjectionMatrix( m_mat4ProjectionLeft );
 		renderScene( vr::Eye_Left );
-		renderController( vr::Eye_Left );
+		//gl::setViewMatrix(m_mat4eyePosLeft * m_mat4HMDPose);
+		//renderController( vr::Eye_Left );
 	}
 	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
 
@@ -529,10 +537,11 @@ void hmd::HtcVive::renderStereoTargets( std::function<void( vr::Hmd_Eye )> rende
 	{
 		gl::ScopedViewMatrix pushView;
 		gl::ScopedProjectionMatrix pushProj;
-		gl::setViewMatrix( m_mat4eyePosRight * m_mat4HMDPose * worldPose);
+		gl::setViewMatrix(m_mat4eyePosRight * m_mat4HMDPose *worldPose);
 		gl::setProjectionMatrix( m_mat4ProjectionRight );
 		renderScene( vr::Eye_Right );
-		renderController( vr::Eye_Right );
+		//gl::setViewMatrix(m_mat4eyePosRight * m_mat4HMDPose);
+		//renderController( vr::Eye_Right );
 	}
 	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
 
@@ -608,6 +617,26 @@ glm::mat4 HtcVive::getHMDMatrixPoseEye( vr::Hmd_Eye nEye )
 	return glm::inverse( matrixObj );
 }
 
+glm::mat4 HtcVive::getCurrentViewMatrix(vr::Hmd_Eye nEye)
+{
+	glm::mat4 matMV;
+	if (nEye == vr::Eye_Left)
+	{
+		matMV = m_mat4eyePosLeft * m_mat4HMDPose;
+	}
+	else if (nEye == vr::Eye_Right)
+	{
+		matMV = m_mat4eyePosRight * m_mat4HMDPose;
+	}
+
+	return matMV;
+}
+
+glm::mat4 HtcVive::getCurrentViewMatrix()
+{
+	return m_mat4HMDPose;
+}
+
 glm::mat4 HtcVive::getCurrentViewProjectionMatrix( vr::Hmd_Eye nEye )
 {
 	glm::mat4 matMVP;
@@ -629,6 +658,8 @@ void HtcVive::updateHMDMatrixPose()
 
 	m_iValidPoseCount = 0;
 	m_strPoseClasses = "";
+	mDeviceIndexLeft = -1;
+	mDeviceIndexRight = -1;
 	for( int nDevice = 0; nDevice < vr::k_unMaxTrackedDeviceCount; ++nDevice )
 	{
 		if( mTrackedDevicePose[nDevice].bPoseIsValid )
@@ -648,6 +679,10 @@ void HtcVive::updateHMDMatrixPose()
 				}
 			}
 			m_strPoseClasses += m_rDevClassChar[nDevice];
+
+			vr::ETrackedControllerRole role = mHMD->GetControllerRoleForTrackedDeviceIndex(nDevice);
+			if (role == vr::TrackedControllerRole_LeftHand) mDeviceIndexLeft = nDevice;
+			else if (role == vr::TrackedControllerRole_RightHand) mDeviceIndexRight = nDevice;
 		}
 	}
 
