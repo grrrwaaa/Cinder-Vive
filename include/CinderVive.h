@@ -45,6 +45,19 @@ namespace hmd {
 		GLuint m_nResolveFramebufferId;
 	};
 
+	struct HandControllerState {
+		glm::mat4 pose;
+		glm::vec3 velocity;
+		glm::vec3 angularVelocity;
+
+		glm::vec2 trackpad;
+		float trigger;
+
+		bool menuButton, gripButton, trackpadButton, triggerButton;
+
+		bool isValid;
+	};
+
 	typedef std::shared_ptr<class HtcVive> HtcViveRef;
 
 	class HtcVive : ci::Noncopyable
@@ -70,23 +83,12 @@ namespace hmd {
 		glm::mat4 getCurrentViewMatrix();
 		void updateHMDMatrixPose();
 
-		bool getLeftHandController(glm::mat4& pose) {
-			if (mDeviceIndexLeft >= 0) {
-				pose = mDevicePose[mDeviceIndexLeft];
-				return true;
-			}
-			return false;
-		}
-
-		bool getRightHandController(glm::mat4& pose) {
-			if (mDeviceIndexRight >= 0) {
-				pose = mDevicePose[mDeviceIndexRight];
-				return true;
-			}
-			return false;
+		const hmd::HandControllerState& getHandController(vr::Hmd_Eye nEye) const {
+			return mHandControllerState[nEye];
 		}
 
 		glm::mat4 convertSteamVRMatrixToMat4( const vr::HmdMatrix34_t &matPose );
+		glm::vec3 convertSteamVRVectorToVec3( const vr::HmdVector3_t &vector );
 
 	private:
 		HtcVive();
@@ -122,6 +124,8 @@ namespace hmd {
 		std::array<glm::mat4, vr::k_unMaxTrackedDeviceCount> mDevicePose;
 		std::array<bool, vr::k_unMaxTrackedDeviceCount> mShowTrackedDevice;
 		uint32_t mDeviceIndexLeft, mDeviceIndexRight;
+
+		HandControllerState mHandControllerState[2];
 
 		GLuint m_unLensVAO;
 		GLuint m_glIDVertBuffer;

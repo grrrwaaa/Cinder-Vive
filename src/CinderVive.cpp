@@ -66,6 +66,9 @@ HtcVive::HtcVive()
 		gl::enableVerticalSync( false );
 	}
 
+	mHandControllerState[vr::Eye_Left].isValid = 0;
+	mHandControllerState[vr::Eye_Right].isValid = 0;
+
 	// Loading the SteamVR Runtime
 	vr::EVRInitError eError = vr::VRInitError_None;
 	mHMD = vr::VR_Init( &eError, vr::VRApplication_Scene );
@@ -662,10 +665,12 @@ void HtcVive::updateHMDMatrixPose()
 	mDeviceIndexRight = -1;
 	for( int nDevice = 0; nDevice < vr::k_unMaxTrackedDeviceCount; ++nDevice )
 	{
-		if( mTrackedDevicePose[nDevice].bPoseIsValid )
+		const vr::TrackedDevicePose_t& trackedDevicePose = mTrackedDevicePose[nDevice];
+		
+		if(trackedDevicePose.bPoseIsValid )
 		{
 			m_iValidPoseCount++;
-			mDevicePose[nDevice] = convertSteamVRMatrixToMat4( mTrackedDevicePose[nDevice].mDeviceToAbsoluteTracking );
+			mDevicePose[nDevice] = convertSteamVRMatrixToMat4(trackedDevicePose.mDeviceToAbsoluteTracking );
 			if( m_rDevClassChar[nDevice] == 0 )
 			{
 				switch( mHMD->GetTrackedDeviceClass( nDevice ) )
@@ -679,10 +684,51 @@ void HtcVive::updateHMDMatrixPose()
 				}
 			}
 			m_strPoseClasses += m_rDevClassChar[nDevice];
+		}
 
-			vr::ETrackedControllerRole role = mHMD->GetControllerRoleForTrackedDeviceIndex(nDevice);
-			if (role == vr::TrackedControllerRole_LeftHand) mDeviceIndexLeft = nDevice;
-			else if (role == vr::TrackedControllerRole_RightHand) mDeviceIndexRight = nDevice;
+		vr::ETrackedControllerRole role = mHMD->GetControllerRoleForTrackedDeviceIndex(nDevice);
+		if (role == vr::TrackedControllerRole_LeftHand) {
+			mDeviceIndexLeft = nDevice;
+			hmd::HandControllerState& state = mHandControllerState[vr::Eye_Left];
+
+			state.isValid = trackedDevicePose.bPoseIsValid;
+			if (state.isValid && trackedDevicePose.eTrackingResult == vr::TrackingResult_Running_OK) {
+				state.pose = convertSteamVRMatrixToMat4(trackedDevicePose.mDeviceToAbsoluteTracking);
+				state.velocity = convertSteamVRVectorToVec3(trackedDevicePose.vVelocity);
+				state.angularVelocity = convertSteamVRVectorToVec3(trackedDevicePose.vAngularVelocity);
+			}
+
+			vr::VRControllerState_t cs;
+			mHMD->GetControllerState(nDevice, &cs);
+			state.menuButton = cs.ulButtonPressed & 2;
+			state.gripButton = cs.ulButtonPressed & 4;
+			state.trackpadButton = cs.ulButtonTouched & 1;
+			state.triggerButton = cs.ulButtonTouched & 2;
+			state.trackpad.x = cs.rAxis[0].x;
+			state.trackpad.y = cs.rAxis[0].x;
+			state.trigger = cs.rAxis[1].x;
+
+		} 
+		else if (role == vr::TrackedControllerRole_RightHand) {
+			mDeviceIndexRight = nDevice;
+			hmd::HandControllerState& state = mHandControllerState[vr::Eye_Right];
+
+			state.isValid = trackedDevicePose.bPoseIsValid;
+			if (state.isValid && trackedDevicePose.eTrackingResult == vr::TrackingResult_Running_OK) {
+				state.pose = convertSteamVRMatrixToMat4(trackedDevicePose.mDeviceToAbsoluteTracking);
+				state.velocity = convertSteamVRVectorToVec3(trackedDevicePose.vVelocity);
+				state.angularVelocity = convertSteamVRVectorToVec3(trackedDevicePose.vAngularVelocity);
+			}
+
+			vr::VRControllerState_t cs;
+			mHMD->GetControllerState(nDevice, &cs);
+			state.menuButton = cs.ulButtonPressed & 2;
+			state.gripButton = cs.ulButtonPressed & 4;
+			state.trackpadButton = cs.ulButtonTouched & 1;
+			state.triggerButton = cs.ulButtonTouched & 2;
+			state.trackpad.x = cs.rAxis[0].x;
+			state.trackpad.y = cs.rAxis[0].x;
+			state.trigger = cs.rAxis[1].x;
 		}
 	}
 
@@ -734,6 +780,11 @@ glm::mat4 HtcVive::convertSteamVRMatrixToMat4( const vr::HmdMatrix34_t &matPose 
 		matPose.m[0][3], matPose.m[1][3], matPose.m[2][3], 1.0f
 		);
 	return matrixObj;
+}
+
+glm::vec3 HtcVive::convertSteamVRVectorToVec3(const vr::HmdVector3_t &vector)
+{
+	return glm::vec3(vector.v[0], vector.v[1], vector.v[2]);
 }
 
 hmd::ScopedVive::ScopedVive( const HtcViveRef & vive )
