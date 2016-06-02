@@ -41,8 +41,9 @@ namespace hmd {
 		GLuint m_nDepthBufferId;
 		GLuint m_nRenderTextureId;
 		GLuint m_nRenderFramebufferId;
-		GLuint m_nResolveTextureId;
 		GLuint m_nResolveFramebufferId;
+
+		cinder::gl::Texture2dRef mResolveTexture;
 	};
 
 	struct HandControllerState {
@@ -85,6 +86,15 @@ namespace hmd {
 
 		const hmd::HandControllerState& getHandController(vr::Hmd_Eye nEye) const {
 			return mHandControllerState[nEye];
+		}
+
+		cinder::gl::Texture2dRef getEyeTexture(vr::Hmd_Eye nEye = vr::Eye_Left) const {
+			if (nEye == vr::Eye_Left) {
+				return leftEyeDesc.mResolveTexture;
+			}
+			else {
+				return rightEyeDesc.mResolveTexture;
+			}
 		}
 
 		glm::mat4 convertSteamVRMatrixToMat4( const vr::HmdMatrix34_t &matPose );

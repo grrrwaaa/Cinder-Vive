@@ -105,16 +105,20 @@ HtcVive::~HtcVive()
 	glDeleteBuffers( 1, &m_glIDVertBuffer );
 	glDeleteBuffers( 1, &m_glIDIndexBuffer );
 
+	
+
 	glDeleteRenderbuffers( 1, &leftEyeDesc.m_nDepthBufferId );
 	glDeleteTextures( 1, &leftEyeDesc.m_nRenderTextureId );
 	glDeleteFramebuffers( 1, &leftEyeDesc.m_nRenderFramebufferId );
-	glDeleteTextures( 1, &leftEyeDesc.m_nResolveTextureId );
+	//glDeleteTextures( 1, &leftEyeDesc.m_nResolveTextureId );
+	leftEyeDesc.mResolveTexture.reset();
 	glDeleteFramebuffers( 1, &leftEyeDesc.m_nResolveFramebufferId );
 
 	glDeleteRenderbuffers( 1, &rightEyeDesc.m_nDepthBufferId );
 	glDeleteTextures( 1, &rightEyeDesc.m_nRenderTextureId );
 	glDeleteFramebuffers( 1, &rightEyeDesc.m_nRenderFramebufferId );
-	glDeleteTextures( 1, &rightEyeDesc.m_nResolveTextureId );
+	//glDeleteTextures( 1, &rightEyeDesc.m_nResolveTextureId );
+	rightEyeDesc.mResolveTexture.reset();
 	glDeleteFramebuffers( 1, &rightEyeDesc.m_nResolveFramebufferId );
 
 	if( m_unLensVAO != 0 )
@@ -155,9 +159,9 @@ void HtcVive::bind()
 
 void hmd::HtcVive::unbind()
 {
-	vr::Texture_t leftEyeTexture = { (void*)leftEyeDesc.m_nResolveTextureId, vr::API_OpenGL, vr::ColorSpace_Gamma };
+	vr::Texture_t leftEyeTexture = { (void*)leftEyeDesc.mResolveTexture->getId() , vr::API_OpenGL, vr::ColorSpace_Gamma };
 	vr::VRCompositor()->Submit( vr::Eye_Left, &leftEyeTexture );
-	vr::Texture_t rightEyeTexture = { (void*)rightEyeDesc.m_nResolveTextureId, vr::API_OpenGL, vr::ColorSpace_Gamma };
+	vr::Texture_t rightEyeTexture = { (void*)rightEyeDesc.mResolveTexture->getId(), vr::API_OpenGL, vr::ColorSpace_Gamma };
 	vr::VRCompositor()->Submit( vr::Eye_Right, &rightEyeTexture );
 
 	// Spew out the controller and pose count whenever they change.
@@ -255,12 +259,15 @@ bool CreateFrameBuffer( int nWidth, int nHeight, FramebufferDesc &framebufferDes
 	glGenFramebuffers( 1, &framebufferDesc.m_nResolveFramebufferId );
 	glBindFramebuffer( GL_FRAMEBUFFER, framebufferDesc.m_nResolveFramebufferId );
 
-	glGenTextures( 1, &framebufferDesc.m_nResolveTextureId );
-	glBindTexture( GL_TEXTURE_2D, framebufferDesc.m_nResolveTextureId );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0 );
-	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, nWidth, nHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr );
-	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebufferDesc.m_nResolveTextureId, 0 );
+	gl::Texture2d::Format fmt;
+	fmt.dataType(GL_UNSIGNED_BYTE).internalFormat(GL_RGBA8);
+	fmt.minFilter(GL_LINEAR).magFilter(GL_LINEAR_MIPMAP_LINEAR);
+	fmt.wrap(GL_CLAMP_TO_EDGE);
+	framebufferDesc.mResolveTexture = gl::Texture2d::create(nWidth, nHeight, fmt);
+	framebufferDesc.mResolveTexture->bind();
+	
+	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebufferDesc.mResolveTexture->getId(), 0 );
+
 
 	// check FBO status
 	GLenum status = glCheckFramebufferStatus( GL_FRAMEBUFFER );
@@ -570,19 +577,11 @@ void HtcVive::renderDistortion( const ivec2& windowSize )
 	glUseProgram( mGlslLens->getHandle() );
 
 	//render left lens (first half of index array )
-	glBindTexture( GL_TEXTURE_2D, leftEyeDesc.m_nResolveTextureId );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	leftEyeDesc.mResolveTexture->bind();
 	glDrawElements( GL_TRIANGLES, m_uiIndexSize / 2, GL_UNSIGNED_SHORT, 0 );
 
 	//render right lens (second half of index array )
-	glBindTexture( GL_TEXTURE_2D, rightEyeDesc.m_nResolveTextureId );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	rightEyeDesc.mResolveTexture->bind();
 	glDrawElements( GL_TRIANGLES, m_uiIndexSize / 2, GL_UNSIGNED_SHORT, (const void *)(m_uiIndexSize) );
 
 	glBindVertexArray( 0 );
