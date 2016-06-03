@@ -699,10 +699,10 @@ void HtcVive::updateHMDMatrixPose()
 
 			vr::VRControllerState_t cs;
 			mHMD->GetControllerState(nDevice, &cs);
-			state.menuButton = cs.ulButtonPressed & 2;
-			state.gripButton = cs.ulButtonPressed & 4;
-			state.trackpadButton = cs.ulButtonTouched & 1;
-			state.triggerButton = cs.ulButtonTouched & 2;
+			state.menuButton = (cs.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_ApplicationMenu)) != 0;
+			state.gripButton = (cs.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_Grip)) != 0;
+			state.trackpadButton = (cs.ulButtonTouched & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad)) != 0;
+			state.triggerButton = (cs.ulButtonTouched & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger)) != 0;
 			state.trackpad.x = cs.rAxis[0].x;
 			state.trackpad.y = cs.rAxis[0].x;
 			state.trigger = cs.rAxis[1].x;
@@ -721,10 +721,10 @@ void HtcVive::updateHMDMatrixPose()
 
 			vr::VRControllerState_t cs;
 			mHMD->GetControllerState(nDevice, &cs);
-			state.menuButton = cs.ulButtonPressed & 2;
-			state.gripButton = cs.ulButtonPressed & 4;
-			state.trackpadButton = cs.ulButtonTouched & 1;
-			state.triggerButton = cs.ulButtonTouched & 2;
+			state.menuButton = (cs.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_ApplicationMenu)) != 0;
+			state.gripButton = (cs.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_Grip)) != 0;
+			state.trackpadButton = (cs.ulButtonTouched & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad)) != 0;
+			state.triggerButton = (cs.ulButtonTouched & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger)) != 0;
 			state.trackpad.x = cs.rAxis[0].x;
 			state.trackpad.y = cs.rAxis[0].x;
 			state.trigger = cs.rAxis[1].x;
