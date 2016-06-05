@@ -68,6 +68,7 @@ HtcVive::HtcVive()
 
 	{
 		HandControllerState& hand = mHandControllerState[vr::Eye_Left];
+		hand.index = -1;
 		hand.isValid = 0;
 		hand.trigger = 0.f;
 		hand.gripButton = 0;
@@ -78,6 +79,7 @@ HtcVive::HtcVive()
 	}
 	{
 		HandControllerState& hand = mHandControllerState[vr::Eye_Right];
+		hand.index = -1;
 		hand.isValid = 0;
 		hand.trigger = 0.f;
 		hand.gripButton = 0;
@@ -717,6 +719,7 @@ void HtcVive::updateHMDMatrixPose()
 
 			vr::VRControllerState_t cs;
 			mHMD->GetControllerState(nDevice, &cs);
+			state.index = nDevice;
 			state.menuButton = (cs.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_ApplicationMenu)) != 0;
 			state.gripButton = (cs.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_Grip)) != 0;
 			state.trackpadButton = (cs.ulButtonTouched & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad)) != 0;
@@ -739,6 +742,7 @@ void HtcVive::updateHMDMatrixPose()
 
 			vr::VRControllerState_t cs;
 			mHMD->GetControllerState(nDevice, &cs);
+			state.index = nDevice;
 			state.menuButton = (cs.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_ApplicationMenu)) != 0;
 			state.gripButton = (cs.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_Grip)) != 0;
 			state.trackpadButton = (cs.ulButtonTouched & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad)) != 0;

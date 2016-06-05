@@ -54,6 +54,8 @@ namespace hmd {
 		glm::vec2 trackpad;
 		float trigger;
 
+		int index;
+
 		bool menuButton, gripButton, trackpadButton, triggerButton;
 
 		bool isValid;
@@ -94,6 +96,14 @@ namespace hmd {
 			}
 			else {
 				return rightEyeDesc.mResolveTexture;
+			}
+		}
+
+		// maximum pulse duration is ~4000 us.
+		void triggerHapticPulse(vr::Hmd_Eye nEye = vr::Eye_Left, unsigned short usDurationMicroSec = 1000) {
+			int index = mHandControllerState[nEye].index;
+			if (mHMD != nullptr && index >= 0) {
+				mHMD->TriggerHapticPulse(index, 0, usDurationMicroSec);
 			}
 		}
 
