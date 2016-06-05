@@ -66,8 +66,26 @@ HtcVive::HtcVive()
 		gl::enableVerticalSync( false );
 	}
 
-	mHandControllerState[vr::Eye_Left].isValid = 0;
-	mHandControllerState[vr::Eye_Right].isValid = 0;
+	{
+		HandControllerState& hand = mHandControllerState[vr::Eye_Left];
+		hand.isValid = 0;
+		hand.trigger = 0.f;
+		hand.gripButton = 0;
+		hand.menuButton = 0;
+		hand.trackpadButton = 0;
+		hand.triggerButton = 0;
+		hand.pose = glm::mat4(1.f);
+	}
+	{
+		HandControllerState& hand = mHandControllerState[vr::Eye_Right];
+		hand.isValid = 0;
+		hand.trigger = 0.f;
+		hand.gripButton = 0;
+		hand.menuButton = 0;
+		hand.trackpadButton = 0;
+		hand.triggerButton = 0;
+		hand.pose = glm::mat4(1.f);
+	}
 
 	// Loading the SteamVR Runtime
 	vr::EVRInitError eError = vr::VRInitError_None;
